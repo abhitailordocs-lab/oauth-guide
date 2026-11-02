@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OAuth App Setup Guides</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--bd:#e3e3e3;--card:#f7f7f8;--ac:#2f5bea}
+@media(prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#9a9a9a;--bd:#333;--card:#1f1f1f;--ac:#7c9bff}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:820px;margin:0 auto;padding:24px 16px 80px}h1{font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 8px}
+p.s{color:var(--mut);margin:0 0 16px}form{display:flex;gap:8px;margin:16px 0}input{flex:1;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+button{padding:10px 16px;border:0;border-radius:8px;background:var(--ac);color:#fff;font:inherit;cursor:pointer}button.g{background:var(--card);color:var(--fg);border:1px solid var(--bd)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin:10px 0;cursor:pointer}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600;color:#fff}
+.easy{background:#2a8a4a}.review{background:#b7791f}.gated{background:#c0392b}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.box{border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--card)}.box b{display:block;color:var(--mut);font-size:12px;text-transform:uppercase}
+.tag{font-size:12px;padding:1px 8px;border-radius:6px;border:1px solid var(--bd);margin-right:6px}
+.tested{background:#2a8a4a22}.documented{background:#2f5bea22}.inferred{background:#b7791f22}.unverified{background:#c0392b22}
+ul,ol{padding-left:22px;margin:6px 0}.cl{border-top:1px solid var(--bd);padding:8px 0}.m{color:var(--mut);font-size:14px}a{color:var(--ac)}
+.err{color:#c0392b}.sb{font-size:11px;padding:0 6px;border-radius:6px;border:1px solid var(--bd);color:var(--mut);white-space:nowrap}.sb.unsourced{color:#c0392b;border-color:#c0392b}.sb.sourced{color:#2a8a4a;border-color:#2a8a4a}.tag.community-reported{background:#b7791f22}
+</style></head><body><main id="app"></main>
+<script>
+const $=document.getElementById('app'),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))),dec=s=>JSON.parse(decodeURIComponent(escape(atob(s))));
+const B={sourced:'sourced',community:'community only',inferred:'inferred',unsourced:'unsourced'};
+const sb=s=>s?' <span class="sb '+s+'">'+B[s]+'</span>':'';
+const A=x=>(Array.isArray(x)?x:(x?[x]:[])).filter(v=>v!=null);
+const it=x=>x==null?'':typeof x==='string'?esc(x):esc(x.t??x.text??JSON.stringify(x))+sb(x.status);
+const ul=a=>'<ul>'+A(a).map(x=>'<li>'+it(x)+'</li>').join('')+'</ul>';
+let seeds=[];
+async function home(msg){
+ $.innerHTML=`<h1>OAuth app setup guides</h1><p class="s">How hard is it to get an OAuth app ready and approved? Look up an app or generate a guide for any provider.</p>
+ <form id="f"><input id="q" placeholder="App name or website, e.g. Zoom or asana.com" required><button>Generate guide</button></form><div id="st" class="m">${msg||''}</div>
+ <h2>Ready-made guides</h2>`+seeds.map(g=>`<div class="card" onclick="location.hash='#/guide/${g.slug}'"><span class="pill ${g.difficulty}">${g.difficulty}</span> <b>${esc(g.app)}</b><div class="m">Dev: ${esc(g.dev_ready)} · Production: ${esc(g.prod_ready)}${sb(g.prod_ready_status)}</div></div>`).join('');
+ document.getElementById('f').onsubmit=gen}
+async function gen(e){e.preventDefault();const q=document.getElementById('q').value,st=document.getElementById('st');
+ st.textContent='Agent is searching official docs and probing endpoints (30-60s)...';
+ try{const r=await fetch('/api/generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({app:q}),signal:AbortSignal.timeout(170000)});const g=await r.json();
+ if(!r.ok)throw new Error(g.error);location.hash='#g='+enc(g)}catch(x){st.innerHTML='<span class="err">'+esc(x.message)+'</span>'}}
+function show(g){
+ const rv=g.review||{},w=g.who_does_what||{};window.__g=g;
+ $.innerHTML=`<button class="g" onclick="location.hash=''">← All guides</button> <button class="g" onclick="navigator.clipboard.writeText(location.href);this.textContent='Link copied'">Copy share link</button> <button class="g" onclick="navigator.clipboard.writeText(JSON.stringify(window.__g,null,1));this.textContent='JSON copied'">Copy JSON</button>
+ <h1>${esc(g.app)} <span class="pill ${g.difficulty}">${esc(g.difficulty)}</span></h1><p class="s">${esc(g.summary)}</p>
+ ${g.generated?'<p class="m">Generated live '+esc(g.generated_at)+'. Check the evidence labels before relying on it.</p>':''}
+ <div class="grid"><div class="box"><b>Ready to build</b>${esc(g.dev_ready)}${sb(g.dev_ready_status)}</div><div class="box"><b>Ready for real users</b>${esc(g.prod_ready)}</div></div>
+ <p class="m">Effort: ${esc(g.effort)}</p>${g.composio_note?'<p><b>Composio:</b> '+esc(g.composio_note)+'</p>':''}
+ <h2>Before you start</h2>${ul(g.before_you_start)}<h2>Setup steps</h2><ol>${A(g.setup_steps).map(x=>'<li>'+it(x)+'</li>').join('')}</ol>
+ <h2>Approval</h2><p>${rv.required?'<b>Review required.</b> ':'<b>No review found.</b> '}${esc(rv.what)}${sb(rv.status)}</p>${ul(rv.rejection_risks)}
+ <h2>Who does what</h2><div class="grid"><div class="box"><b>Agent can</b>${ul(w.agent)}</div><div class="box"><b>You do</b>${ul(w.you)}</div></div><div class="box" style="margin-top:10px"><b>Provider controls</b>${ul(w.provider)}</div>
+ <h2>If you get blocked</h2>${A(g.blockers).map(b=>'<div class="cl"><b>'+esc(b.problem)+'</b><br>'+esc(b.fix)+sb(b.status)+'</div>').join('')}
+ <h2>Evidence</h2>${A(g.claims).map(c=>`<div class="cl"><span class="tag ${c.label}">${esc(c.label)}</span>${c.source_type?'<span class="tag">'+esc(c.source_type)+'</span>':''}${esc(c.text)}<div class="m">${c.quote?'<i>“'+esc(c.quote)+'”</i><br>':''}${esc(c.source_note)} ${c.source_url?'<a href="'+esc(c.source_url)+'" target="_blank" rel="noopener">source</a>':''}</div></div>`).join('')}`;
+ window.scrollTo(0,0)}
+async function route(){const h=location.hash;
+ if(!seeds.length)seeds=await (await fetch('/guides.json')).json();
+ if(h.startsWith('#g=')){let g;try{g=dec(h.slice(3))}catch{return home('Invalid share link')}
+  try{return show(g)}catch(e){return home('Could not display this guide: '+esc(e.message))}}
+ const m=h.match(/^#\/guide\/(.+)$/);if(m){const g=seeds.find(s=>s.slug===m[1]);if(g)return show(g)}home()}
+addEventListener('hashchange',route);route();
+</script></body></html>

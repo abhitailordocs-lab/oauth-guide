@@ -1,0 +1,230 @@
+[
+ {
+  "slug": "github",
+  "app": "GitHub",
+  "website": "https://github.com",
+  "difficulty": "easy",
+  "summary": "Self-serve: register an OAuth app in your account settings and get a client ID and secret immediately. No approval step was found in the sources read.",
+  "dev_ready": "~10 minutes",
+  "prod_ready": "Same day (no review gate found; see claims)",
+  "effort": "Low",
+  "composio_note": "Composio's GitHub toolkit page lists managed OAuth (OAuth2) as available, checked 2026-10-31. If you use Composio, you can connect GitHub without registering your own OAuth app. Register your own only for your brand on the consent screen, custom scopes, or a separate rate-limit quota.",
+  "before_you_start": [
+   "A GitHub account (personal or an organization where you are admin).",
+   "Add a redirect URI for each environment (local, staging, production). The settings page allows up to 10."
+  ],
+  "setup_steps": [
+   "Settings > Developer settings > OAuth Apps > New OAuth App.",
+   "Fill application name, homepage URL and optional description (use only public information).",
+   "Set the Authorization callback URL to your app's exact redirect URI. You can add up to 10.",
+   "Optionally enable Device Flow. Decide whether to keep 'Expire user access tokens' on (the default), which needs refresh-token support in your code. Then click Register application.",
+   "Copy the client ID and generate a client secret."
+  ],
+  "review": {
+   "required": false,
+   "what": "No marketplace-style review found for OAuth apps in the docs read. Organizations may restrict third-party app access (inferred, not sourced).",
+   "rejection_risks": [
+    "Org owners can block unapproved OAuth apps, so users in locked-down orgs may need an admin to approve."
+   ]
+  },
+  "who_does_what": {
+   "agent": [
+    "Draft the exact field values and redirect URI per environment.",
+    "Generate the code for the authorize/token exchange."
+   ],
+   "you": [
+    "Click through the registration (needs your logged-in account).",
+    "Store the client secret safely."
+   ],
+   "provider": [
+    "Nothing; registration is instant."
+   ]
+  },
+  "blockers": [
+   {
+    "problem": "Redirect URI mismatch error",
+    "fix": "Every redirect URI must match exactly. Add each environment's URI to the same app, and avoid wildcard matching unless you control every possible match."
+   },
+   {
+    "problem": "User access tokens stop working after a short time",
+    "fix": "'Expire user access tokens' is on by default. Store the refresh token and refresh access tokens, or uncheck the option only if your code cannot handle short-lived tokens yet."
+   },
+   {
+    "problem": "Users in an org cannot authorize",
+    "fix": "Ask an org owner to approve your app under the org's third-party access settings (inferred)."
+   }
+  ],
+  "endpoints": {
+   "authorize": "https://github.com/login/oauth/authorize",
+   "token": "https://github.com/login/oauth/access_token"
+  },
+  "claims": [
+   {
+    "text": "OAuth apps can be created under a personal account or an organization you have admin access to.",
+    "label": "documented",
+    "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+    "quote": "You can create and register an OAuth app under your personal account or under any organization you have administrative access to.",
+    "source_note": "Read on GitHub's current docs on 2026-10-31. Page address inferred from the page's own links; confirm it in your browser's address bar."
+   },
+   {
+    "text": "The OAuth app settings page allows up to 10 redirect URIs, with an optional wildcard-matching checkbox.",
+    "label": "tested",
+    "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+    "source_note": "Seen on my own test app's settings page on 2026-10-31, and stated in GitHub's current docs. This contradicts older GitHub Enterprise Server docs, which said only one callback URL was allowed.",
+    "quote": "You can enter up to 10 callback URLs."
+   },
+   {
+    "text": "GitHub recommends considering a GitHub App instead of an OAuth app.",
+    "label": "documented",
+    "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+    "quote": "Consider building a GitHub App instead of an OAuth app.",
+    "source_note": "Read on GitHub's current docs on 2026-10-31. Page address inferred from the page's own links; confirm it in your browser's address bar."
+   },
+   {
+    "text": "A user or organization can own up to 100 OAuth apps.",
+    "label": "documented",
+    "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+    "quote": "A user or organization can own up to 100 OAuth apps.",
+    "source_note": "Read on GitHub's current docs on 2026-10-31. Page address inferred from the page's own links; confirm it in your browser's address bar."
+   },
+   {
+    "text": "The option 'Expire user access tokens' is enabled by default, so user tokens are short-lived unless you uncheck it.",
+    "label": "documented",
+    "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+    "quote": "Expire user access tokens is enabled by default.",
+    "source_note": "Read on GitHub's current docs on 2026-10-31. Page address inferred from the page's own links; confirm it in your browser's address bar."
+   },
+   {
+    "text": "Authorize endpoint returned HTTP 302 to an unauthenticated GET; the token endpoint returned 404 to a GET.",
+    "label": "tested",
+    "source_url": "https://github.com/login/oauth/authorize",
+    "source_note": "Probed with curl from an automated environment on 2026-10-28, not by hand. The 404 on GET is probably because the token endpoint expects POST, but a POST was not tested."
+   },
+   {
+    "text": "Registration takes about 10 minutes.",
+    "label": "inferred",
+    "source_url": null,
+    "source_note": "Estimate from the number of form fields. Nobody has timed a real registration yet."
+   },
+   {
+    "text": "GitHub's registration steps contain no approval step; they end at clicking Register application.",
+    "label": "inferred",
+    "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+    "quote": "Click Register application.",
+    "source_note": "Absence of a review step in the docs is not proof. Organization-level restrictions on which OAuth apps members can authorize were not checked."
+   }
+  ]
+ },
+ {
+  "slug": "google",
+  "app": "Google (Gmail, Drive, Calendar)",
+  "website": "https://console.cloud.google.com",
+  "difficulty": "gated",
+  "summary": "Easy to start in Testing mode, hard to ship. Sensitive scopes need app verification, and restricted scopes (most Gmail and Drive) also need an annual third-party security assessment.",
+  "dev_ready": "~1 hour (Testing mode, up to 100 test users)",
+  "prod_ready": "Sensitive scopes: roughly a week. Restricted scopes: roughly 2 to 4+ weeks including the security assessment",
+  "effort": "High for restricted scopes",
+  "composio_note": "Composio's Gmail and Google Drive toolkit pages list managed OAuth (OAuth2) as available, checked 2026-10-31. If you use Composio you may not need your own Google OAuth app for a first connection. Register your own for your brand on the consent screen, custom scopes, or your own quota. What the managed app's consent screen shows users was not checked.",
+  "before_you_start": [
+   "A Google Cloud project and a verified app domain with a privacy policy.",
+   "Pick the narrowest scopes possible; reviewers reject unused scopes.",
+   "Budget for a CASA assessment vendor if you need restricted scopes (fee not verified)."
+  ],
+  "setup_steps": [
+   "Create a Google Cloud project and enable the APIs you need.",
+   "Configure the OAuth consent screen and add the scopes under Data Access.",
+   "Create an OAuth client ID and copy the secret (shown once).",
+   "Test in Testing mode with listed test users.",
+   "Publish to production, click Prepare for Verification, justify scopes and upload a demo video.",
+   "If restricted scopes: complete the CASA assessment with an approved vendor, then renew annually."
+  ],
+  "review": {
+   "required": true,
+   "what": "Brand verification for sensitive scopes; verification plus CASA security assessment for restricted scopes.",
+   "rejection_risks": [
+    "Requesting scopes the app does not use.",
+    "Demo video that does not show the full OAuth flow and scope usage.",
+    "Unpatched findings from the security scan."
+   ]
+  },
+  "who_does_what": {
+   "agent": [
+    "Pick minimum scopes, draft scope justifications and the demo-video script, prepare the privacy policy checklist."
+   ],
+   "you": [
+    "Create the project, verify the domain, record the demo video, pay and coordinate the CASA vendor."
+   ],
+   "provider": [
+    "Google reviews the app; the CASA vendor performs the assessment."
+   ]
+  },
+  "blockers": [
+   {
+    "problem": "access_denied for a user",
+    "fix": "In Testing mode, add them as a test user (max 100), or publish and verify."
+   },
+   {
+    "problem": "Integration works, then breaks after a week",
+    "fix": "Testing-mode refresh tokens expire after 7 days. Move to production before real users."
+   },
+   {
+    "problem": "Test-user cap reached",
+    "fix": "The count cannot be reset; use a separate Cloud project for development."
+   }
+  ],
+  "endpoints": {
+   "authorize": "https://accounts.google.com/o/oauth2/v2/auth",
+   "token": "https://oauth2.googleapis.com/token"
+  },
+  "claims": [
+   {
+    "text": "Non-sensitive sign-in scopes (openid, email, profile) trigger no verification; sensitive scopes need brand verification; restricted scopes add an annual CASA assessment.",
+    "label": "documented",
+    "source_url": "https://developer.nylas.com/docs/cookbook/use-cases/build/fix-google-access-denied/",
+    "source_note": "Third-party (Nylas), consistent with Nango. Google's own page, linked from Nango at support.google.com/cloud/answer/13464325, was not fetched."
+   },
+   {
+    "text": "Testing mode allows 100 test users, which cannot be reset, and refresh tokens expire after 7 days.",
+    "label": "documented",
+    "source_url": "https://nango.dev/docs/integrations/google-security-review",
+    "source_note": "Third-party. Unified.to and Nango docs agree; exception for basic scopes only."
+   },
+   {
+    "text": "Google's first review response is typically within 24 to 48 hours; sensitive-only verification is usually under a week.",
+    "label": "documented",
+    "source_url": "https://nango.dev/docs/api-integrations/google-shared/google-security-review.md",
+    "source_note": "Third-party experience, not a Google SLA."
+   },
+   {
+    "text": "Restricted scopes: budget 10 to 20 days for the security assessment; CASA is usually the longer leg.",
+    "label": "documented",
+    "source_url": "https://nango.dev/docs/integrations/google-security-review",
+    "source_note": "Third-party estimate. Nango also says 5 to 20 days overall; ranges vary."
+   },
+   {
+    "text": "Verification and CASA must be renewed annually for restricted scopes.",
+    "label": "documented",
+    "source_url": "https://nango.dev/docs/api-integrations/google-shared/google-security-review.md",
+    "source_note": "Third-party; Google's page referenced but not fetched."
+   },
+   {
+    "text": "A demo video of the OAuth flow and scope usage is required for sensitive and restricted scopes.",
+    "label": "documented",
+    "source_url": "https://docs.nango.dev/integrations/all/google-ads",
+    "source_note": "Third-party."
+   },
+   {
+    "text": "CASA vendor fees.",
+    "label": "unverified",
+    "source_url": null,
+    "source_note": "Not found in sources read. Ask the approved vendors for quotes."
+   },
+   {
+    "text": "Endpoint URLs are as listed.",
+    "label": "unverified",
+    "source_url": null,
+    "source_note": "From memory, not probed (the build container could not reach Google). Live-generated guides probe these automatically."
+   }
+  ]
+ }
+]
